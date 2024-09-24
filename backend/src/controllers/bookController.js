@@ -1,5 +1,6 @@
 import Book from '../models/bookModel.js';
 import BorrowTransaction from '../models/borrowTransactionModel.js';
+import Review from '../models/reviewModel.js';  // Ensure this path points to where you defined the reviewModel
 import fs from 'fs';
 import path from 'path';
 
@@ -9,34 +10,38 @@ export const getBooks = async (req, res) => {
         const books = await Book.find().populate('reviews').exec();
         res.json(books);
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error fetching books:', error); // Log the error for debugging
+        res.status(500).json({ message: 'Server error', error: error.message }); // Include error message in response for debugging
     }
 };
 
+
 // Add a new book (Admin only)
 export const addBook = async (req, res) => {
-    const { title, author, genre, publicationDate, description } = req.body;
+    const { title, author, genre, publicationDate, description, image } = req.body;
 
-    // If an image is uploaded, save the file path
-    let imagePath = '';
-    if (req.file) {
-        const tempPath = req.file.path;
-        const targetPath = path.join(__dirname, '../uploads', req.file.originalname);
-        
-        // Move the uploaded file to a permanent location
-        fs.rename(tempPath, targetPath, (err) => {
-            if (err) return res.status(500).json({ message: 'Error saving image' });
-        });
-        
-        imagePath = `/uploads/${req.file.originalname}`;
+    // Validate publication date
+    const pubDate = new Date(publicationDate);
+    if (isNaN(pubDate.getTime())) {
+        return res.status(400).json({ message: 'Invalid publication date' });
     }
 
-    const book = new Book({ title, author, genre, publicationDate, description, image: imagePath, available: true });
+    const book = new Book({
+        title,
+        author,
+        genre,
+        publicationDate: pubDate,
+        description,
+        image,
+        available: true
+    });
+
     try {
         await book.save();
         res.status(201).json(book);
     } catch (error) {
-        res.status(400).json({ message: 'Error adding book' });
+        console.error(error); // Log the error for debugging
+        res.status(400).json({ message: error.message }); // Return the error message
     }
 };
 
@@ -130,4 +135,47 @@ export const returnBook = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: 'Error returning book' });
     }
+};
+
+
+export const getBookById = async (req, res) => {
+    const { id } = req.params; // Extract the ID from the request parameters
+
+    try {
+        // Find the book by ID and populate reviews if necessary
+        const book = await Book.findById(id).populate('reviews.user'); // Populate reviews with user details
+        
+        // If the book is not found, return a 404 error
+        if (!book) {
+            return res.status(404).json({ message: 'Book not found' });
+        }
+        
+        // Return the found book with all details
+        res.status(200).json(book);
+    } catch (error) {
+        console.error(error); // Log the error for debugging
+        res.status(500).json({ message: 'Error retrieving book' });
+    }
+};
+//review
+
+// Example function to create a review
+export const createReview = async (req, res) => {
+  try {
+    const { bookId, userId, rating, comment } = req.body;
+
+    // Create a new review
+    const review = new Review({
+      book: bookId,
+      user: userId,
+      rating,
+      comment
+    });
+
+    await review.save();  // Save the review in the database
+
+    res.status(201).json({ message: 'Review created successfully', review });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create review' });
+  }
 };

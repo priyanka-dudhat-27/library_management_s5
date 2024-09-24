@@ -1,5 +1,5 @@
 import express from 'express';
-import { getBooks, addBook, updateBook, deleteBook, borrowBook, returnBook } from '../controllers/bookController.js';
+import { getBooks,getBookById, addBook, updateBook, deleteBook, borrowBook, returnBook } from '../controllers/bookController.js';
 import { protect, admin } from '../middlewares/authMiddlware.js';
 import {upload} from "../utils/uploadImage.js"
 
@@ -7,6 +7,7 @@ const router = express.Router();
 
 // Public routes
 router.get('/getBooks/', getBooks);
+router.get('/getBookById/:id', getBookById);
 
 // Admin routes
 router.post('/addBook',protect,upload.single('image'), addBook);

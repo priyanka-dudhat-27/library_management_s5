@@ -63,13 +63,22 @@ export const loginUser = async (req, res) => {
 };
 
 // Get user profile
+// Assuming you're using Express and Mongoose
 export const getUserProfile = async (req, res) => {
-    const user = await User.findById(req.user._id).select('-password'); // Exclude password from response
-    if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+    const userId = req.user._id; // Get the user ID from the request (assuming you use middleware to authenticate)
+
+    try {
+        const user = await User.findById(userId).populate('borrowedBooks'); // Populate borrowedBooks
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json(user);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error retrieving user profile' });
     }
-    res.json(user);
 };
+
 
 // Update user information
 export const updateUser = async (req, res) => {
