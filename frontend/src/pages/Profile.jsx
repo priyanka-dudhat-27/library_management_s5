@@ -9,6 +9,7 @@ const UserProfile = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const loggedInUser = useSelector(state => state.auth.user); // Get user from Redux store
+    console.log("loggeduser",loggedInUser)
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -36,7 +37,7 @@ const UserProfile = () => {
     return (
         <Card className="mt-4">
             <CardContent>
-                <Typography variant="h4">{user.name}'s Profile</Typography>
+                <Typography variant="h4">{user.name}s Profile</Typography>
                 <Typography variant="h6">Email: {user.email}</Typography>
                 <Typography variant="h6">Borrowed Books:</Typography>
                 <List>
